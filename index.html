@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CourseMap v2 — Intelligent Academic Planner</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- ══ HEADER ══════════════════════════════════════════════ -->
+  <header>
+    <div class="logo">
+      Course<span class="logo-accent">Map</span>
+      <span class="logo-tag">ACADEMIC PLANNER</span>
+    </div>
+    <div class="header-right" style="display: flex; align-items: center; gap: 20px;">
+      <div class="header-subtitle">
+        <div>Intelligent Syllabus Distribution</div>
+        <div>For Educators &amp; Institutions</div>
+      </div>
+      <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle Theme">
+        <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ══ APP ═════════════════════════════════════════════════ -->
+  <div class="app">
+
+    <!-- ── ALERT ─────────────────────────────────────────── -->
+    <div id="alertBox" class="alert"></div>
+
+    <!-- ══ SECTION 1: Basic Info ════════════════════════════ -->
+    <div class="sec-label">Course Configuration</div>
+    <div class="card">
+      <h2>Plan Your Course</h2>
+      <div class="form-grid">
+        <div class="fg">
+          <label>Subject Name</label>
+          <input type="text" id="subjectName" placeholder="e.g. Data Structures & Algorithms">
+        </div>
+        <div class="fg">
+          <label>Teacher / Faculty Name</label>
+          <input type="text" id="teacherName" placeholder="e.g. Prof. Anjali Sharma">
+        </div>
+        <div class="fg">
+          <label>Academic Term / Batch</label>
+          <input type="text" id="termName" placeholder="e.g. Semester III, Jan–May 2026">
+        </div>
+        <div class="fg"><!-- spacer --></div>
+        <div class="fg">
+          <label>Academic Start Date</label>
+          <input type="date" id="startDate">
+        </div>
+        <div class="fg">
+          <label>Academic End Date</label>
+          <input type="date" id="endDate">
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SECTION 2: Per-Day Timings ══════════════════════ -->
+    <div class="sec-label">Working Days &amp; Lecture Timings</div>
+    <div class="card">
+      <div
+        style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <h2 style="margin:0;">Configure Each Day's Lecture Slot</h2>
+        <button class="btn btn-ghost btn-sm" onclick="applyAllSameTime()">
+          ⇔ Apply Monday's Time to All Enabled Days
+        </button>
+      </div>
+      <p class="tip" style="margin-bottom:14px;">
+        ✓ Check a day to enable it. Each day can have a <strong>different start time</strong> and
+        <strong>duration</strong>.
+      </p>
+      <div class="day-timing-grid" id="dayTimingGrid"></div>
+    </div>
+
+    <!-- ══ SECTION 3: Holidays ══════════════════════════════ -->
+    <div class="sec-label">National Holidays</div>
+    <div class="card">
+      <h2>Exclude Public Holidays</h2>
+      <div class="form-grid" style="margin-bottom:14px;">
+        <div class="fg">
+          <label>Holiday Date</label>
+          <input type="date" id="hDate">
+        </div>
+        <div class="fg">
+          <label>Holiday Name</label>
+          <input type="text" id="hName" placeholder="e.g. Republic Day">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="btn btn-ghost btn-sm" onclick="addHoliday()">＋ Add Holiday</button>
+        <button class="btn btn-teal btn-sm" onclick="loadHolidays(2025)">🇮🇳 Load India 2025</button>
+        <button class="btn btn-teal btn-sm" onclick="loadHolidays(2026)">🇮🇳 Load India 2026</button>
+      </div>
+      <div class="tag-cloud" id="holidayTags">
+        <span class="tag-empty">No holidays added</span>
+      </div>
+    </div>
+
+    <!-- ══ SECTION 4: Excluded Periods ═════════════════════ -->
+    <div class="sec-label">Excluded Date Periods</div>
+    <div class="card">
+      <h2>Block Out Exam &amp; Break Periods</h2>
+      <p class="tip" style="margin-bottom:14px;">
+        Use this to exclude mid-term exams, study breaks, internal assessments, or any multi-day event.
+        All dates in the range (inclusive) will be removed from the teaching schedule.
+      </p>
+      <div class="form-grid-3" style="margin-bottom:14px;">
+        <div class="fg">
+          <label>Period Label</label>
+          <input type="text" id="pLabel" placeholder="e.g. Mid-Semester Exam">
+        </div>
+        <div class="fg">
+          <label>From Date</label>
+          <input type="date" id="pFrom">
+        </div>
+        <div class="fg">
+          <label>To Date</label>
+          <input type="date" id="pTo">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="btn btn-ghost btn-sm" onclick="addPeriod()">＋ Add Excluded Period</button>
+        <button class="btn btn-ghost btn-sm" onclick="
+        document.getElementById('pLabel').value='Mid-Semester Exam';
+        document.getElementById('pFrom').value='';
+        document.getElementById('pTo').value='';">
+          📝 Pre-fill: Mid-Sem Exam
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="
+        document.getElementById('pLabel').value='End-Semester Exam';
+        document.getElementById('pFrom').value='';
+        document.getElementById('pTo').value='';">
+          📝 Pre-fill: End-Sem Exam
+        </button>
+      </div>
+      <div class="tag-cloud" id="periodTags">
+        <span class="tag-empty">No periods excluded</span>
+      </div>
+    </div>
+
+    <!-- ── DYNAMIC SUMMARY ───────────────────────────────── -->
+    <div id="availabilitySummary" class="card" style="display:none; border-left: 3px solid var(--teal); background: rgba(58, 173, 168, 0.05); padding: 16px 28px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h3 style="margin:0; font-family:var(--serif); font-size:1.15rem; color:var(--text);">Available Teaching Time</h3>
+          <p style="margin-top:4px; font-size:0.75rem; color:var(--text2); font-family:var(--sans);">
+            Based on your selected dates, working days, and exclusions.
+          </p>
+        </div>
+        <div style="display:flex; gap:24px; text-align:right;">
+          <div>
+            <div style="font-family:var(--mono); font-size:0.6rem; letter-spacing:1px; text-transform:uppercase; color:var(--muted);">Available Hours</div>
+            <div style="font-family:var(--serif); font-size:1.8rem; font-weight:700; color:var(--teal); line-height:1;"><span id="availHrsText">0.0</span> <span style="font-size:1rem; font-family:var(--sans); font-weight:400; color:var(--muted);">hrs</span></div>
+          </div>
+          <div>
+            <div style="font-family:var(--mono); font-size:0.6rem; letter-spacing:1px; text-transform:uppercase; color:var(--muted);">Lost to Exclusions</div>
+            <div style="font-family:var(--serif); font-size:1.8rem; font-weight:700; color:var(--red); line-height:1;"><span id="exclHrsText">0.0</span> <span style="font-size:1rem; font-family:var(--sans); font-weight:400; color:var(--muted);">hrs</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SECTION 5: Syllabus Units ════════════════════════ -->
+    <div class="sec-label">Syllabus Units</div>
+    <div class="card">
+      <div
+        style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+        <h2 style="margin:0;">Define Units &amp; Topics</h2>
+        <span class="hrs-total" id="totalHrsDisplay">0 hrs total</span>
+      </div>
+      <p class="tip" style="margin-bottom:14px;">
+        Enter topics as a comma-separated list. They'll share time equally, or specify hours like <strong>Intro
+          (2),
+          Basics (1.5)</strong>.
+      </p>
+      <div class="units-list" id="unitsList"></div>
+      <div style="margin-top:12px;">
+        <button class="btn btn-dashed" onclick="addUnit()">＋ Add Unit</button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generatePlan()">Generate Course Plan →</button>
+        <button class="btn btn-ghost" onclick="loadSampleData()">Load Sample Data</button>
+        <button class="btn btn-ghost" onclick="resetAll()">Reset All</button>
+      </div>
+    </div>
+
+    <!-- ══ OUTPUT ════════════════════════════════════════════ -->
+    <div id="outputSection" style="display:none;">
+
+      <div class="sec-label">Generated Course Plan</div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <!-- Remaining Topics Alert -->
+      <div id="remainingAlert" style="display:none; margin-bottom:18px;"></div>
+
+      <!-- Actions -->
+      <div class="out-actions">
+        <button class="btn btn-primary" onclick="window.print()">🖨 Print / Save PDF</button>
+        <button class="btn btn-teal" onclick="exportCSV()">⬇ Export CSV</button>
+        <button class="btn btn-ghost" onclick="scrollToTop()">↑ Back to Edit</button>
+      </div>
+
+      <!-- Table -->
+      <div class="plan-card">
+        <div class="plan-card-head">
+          <h3 id="planTitle">Course Plan</h3>
+          <div class="plan-meta" id="planMeta"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Day</th>
+                <th>Time Slot</th>
+                <th>Unit</th>
+                <th>Topic / Content</th>
+                <th>Hours</th>
+                <th>Progress</th>
+              </tr>
+            </thead>
+            <tbody id="planBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Bottom actions -->
+      <div class="out-actions">
+        <button class="btn btn-primary" onclick="window.print()">🖨 Print / Save PDF</button>
+        <button class="btn btn-teal" onclick="exportCSV()">⬇ Export CSV</button>
+        <button class="btn btn-ghost" onclick="scrollToTop()">↑ Back to Edit</button>
+      </div>
+
+    </div><!-- /outputSection -->
+
+  </div><!-- /app -->
+
+  <script src="script.js"></script>
+</body>
+
+</html>
