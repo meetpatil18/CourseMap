@@ -58,6 +58,8 @@ window.onload = () => {
   }
 };
 
+window.addEventListener('beforeunload', saveSession);
+
 function toggleTheme() {
   const root = document.documentElement;
   const isLight = root.getAttribute('data-theme') === 'light';
@@ -418,6 +420,9 @@ function generatePlan() {
   const startStr = document.getElementById('startDate').value;
   const endStr = document.getElementById('endDate').value;
 
+  const ccCb = document.getElementById('addCourseCodeCb');
+  const courseCodeStr = (ccCb && ccCb.checked) ? document.getElementById('courseCode').value.trim() : '';
+
   if (!subject) { showAlert('Please enter a subject name.'); return; }
   if (!startStr || !endStr) { showAlert('Please select start and end dates.'); return; }
   if (startStr > endStr) { showAlert('"Start Date" must be before "End Date".'); return; }
@@ -591,7 +596,11 @@ function generatePlan() {
     if (remUi) remUi.style.display = 'none';
   }
 
-  document.getElementById('planTitle').textContent = subject + ' — Course Plan';
+  let titleStr = subject;
+  if (courseCodeStr) {
+    titleStr = `${courseCodeStr} — ${subject}`;
+  }
+  document.getElementById('planTitle').textContent = titleStr + ' — Course Plan';
   document.getElementById('planMeta').innerHTML =
     `${escHtml(term || '')} · ${escHtml(teacher || 'Faculty')}<br>${startStr} to ${endStr}`;
 
@@ -713,6 +722,26 @@ function exportCSV() {
 }
 
 // ── UTILITIES ──────────────────────────────────────────────
+function toggleCourseCode() {
+  const cb = document.getElementById('addCourseCodeCb');
+  const container = document.getElementById('courseCodeContainer');
+  const spacer = document.getElementById('basicInfoSpacer');
+  if (cb && cb.checked) {
+    container.style.display = 'flex';
+    if (spacer) spacer.style.display = 'none';
+  } else {
+    container.style.display = 'none';
+    if (spacer) spacer.style.display = 'block';
+  }
+}
+
+function validateSubjectName(input) {
+  if (/\d/.test(input.value)) {
+    showAlert('You can only add roman numbers (e.g. I, II, III).');
+    input.value = input.value.replace(/\d/g, '');
+  }
+}
+
 function showAlert(msg) {
   const el = document.getElementById('alertBox');
   el.textContent = '⚠  ' + msg;
@@ -725,6 +754,9 @@ function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
 function resetAll() {
   document.getElementById('subjectName').value = '';
+  document.getElementById('addCourseCodeCb').checked = false;
+  toggleCourseCode();
+  document.getElementById('courseCode').value = '';
   document.getElementById('teacherName').value = '';
   document.getElementById('termName').value = '';
   holidays = {};
@@ -740,6 +772,12 @@ function resetAll() {
 
 function loadSampleData() {
   document.getElementById('subjectName').value = 'Data Structures & Algorithms';
+  const ccCb = document.getElementById('addCourseCodeCb');
+  if (ccCb) {
+    ccCb.checked = true;
+    toggleCourseCode();
+    document.getElementById('courseCode').value = 'CS-301';
+  }
   document.getElementById('teacherName').value = 'Prof. Anjali Sharma';
   document.getElementById('termName').value = 'Semester III — Jan to May 2026';
   document.getElementById('startDate').value = '2026-01-05';
@@ -778,4 +816,67 @@ function loadSampleData() {
   renderUnits();
   
   updateAvailabilitySummary();
+}
+
+// ── SESSION MANAGEMENT ─────────────────────────────────────
+function saveSession() {
+  const sessionData = {
+    subjectName: document.getElementById('subjectName').value,
+    addCourseCodeCb: document.getElementById('addCourseCodeCb') ? document.getElementById('addCourseCodeCb').checked : false,
+    courseCode: document.getElementById('courseCode') ? document.getElementById('courseCode').value : '',
+    teacherName: document.getElementById('teacherName').value,
+    termName: document.getElementById('termName').value,
+    startDate: document.getElementById('startDate').value,
+    endDate: document.getElementById('endDate').value,
+    dayConfig: dayConfig,
+    holidays: holidays,
+    excludePeriods: excludePeriods,
+    units: units
+  };
+  localStorage.setItem('coursemap_backup', JSON.stringify(sessionData));
+}
+
+function restoreSession() {
+  const dataStr = localStorage.getItem('coursemap_backup');
+  if (!dataStr) {
+    showAlert('No previous session found to restore.');
+    return;
+  }
+  
+  try {
+    const data = JSON.parse(dataStr);
+    
+    document.getElementById('subjectName').value = data.subjectName || '';
+    if (document.getElementById('addCourseCodeCb')) {
+      document.getElementById('addCourseCodeCb').checked = !!data.addCourseCodeCb;
+      toggleCourseCode();
+    }
+    if (document.getElementById('courseCode')) {
+      document.getElementById('courseCode').value = data.courseCode || '';
+    }
+    document.getElementById('teacherName').value = data.teacherName || '';
+    document.getElementById('termName').value = data.termName || '';
+    document.getElementById('startDate').value = data.startDate || '';
+    document.getElementById('endDate').value = data.endDate || '';
+    
+    if (data.dayConfig) dayConfig = data.dayConfig;
+    if (data.holidays) holidays = data.holidays;
+    if (data.excludePeriods) {
+        excludePeriods = data.excludePeriods;
+        periodIdCounter = excludePeriods.length ? Math.max(...excludePeriods.map(p => p.id)) + 1 : 0;
+    }
+    if (data.units) {
+        units = data.units;
+        unitIdCounter = units.length ? Math.max(...units.map(u => u.id)) + 1 : 0;
+    }
+    
+    renderDayTimings();
+    renderHolidayTags();
+    renderPeriodTags();
+    renderUnits();
+    updateAvailabilitySummary();
+    showAlert('Session restored successfully.');
+  } catch (e) {
+    showAlert('Failed to restore session data.');
+  }
 }

@@ -41,8 +41,17 @@
       <h2>Plan Your Course</h2>
       <div class="form-grid">
         <div class="fg">
-          <label>Subject Name</label>
-          <input type="text" id="subjectName" placeholder="e.g. Data Structures & Algorithms">
+          <label style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Subject Name</span>
+            <label style="cursor:pointer; display:flex; align-items:center; gap:4px; font-family:var(--sans); font-size:0.65rem; text-transform:none; letter-spacing:0; color:var(--text2); margin:0;">
+              <input type="checkbox" id="addCourseCodeCb" onchange="toggleCourseCode()" style="width:auto; margin:0; accent-color:var(--amber);"> Add Course Code
+            </label>
+          </label>
+          <input type="text" id="subjectName" placeholder="e.g. Data Structures & Algorithms" oninput="validateSubjectName(this)">
+        </div>
+        <div class="fg" id="courseCodeContainer" style="display:none;">
+          <label>Course Code</label>
+          <input type="text" id="courseCode" placeholder="e.g. CS-201">
         </div>
         <div class="fg">
           <label>Teacher / Faculty Name</label>
@@ -52,7 +61,7 @@
           <label>Academic Term / Batch</label>
           <input type="text" id="termName" placeholder="e.g. Semester III, Jan–May 2026">
         </div>
-        <div class="fg"><!-- spacer --></div>
+        <div class="fg" id="basicInfoSpacer"><!-- spacer --></div>
         <div class="fg">
           <label>Academic Start Date</label>
           <input type="date" id="startDate">
@@ -190,6 +199,7 @@
       <div class="btn-row">
         <button class="btn btn-primary" onclick="generatePlan()">Generate Course Plan →</button>
         <button class="btn btn-ghost" onclick="loadSampleData()">Load Sample Data</button>
+        <button class="btn btn-ghost" onclick="restoreSession()">↺ Restore Last Session</button>
         <button class="btn btn-ghost" onclick="resetAll()">Reset All</button>
       </div>
     </div>
