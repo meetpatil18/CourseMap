@@ -96,7 +96,10 @@ function setDefaultDates() {
 
 // ── DATE UTILS ─────────────────────────────────────────────
 function isoDate(d) {
-  return d.toISOString().split('T')[0];
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function fmtDisplay(d) {
@@ -250,6 +253,12 @@ function removeHoliday(date) {
   updateAvailabilitySummary();
 }
 
+function clearHolidays() {
+  holidays = {};
+  renderHolidayTags();
+  updateAvailabilitySummary();
+}
+
 function renderHolidayTags() {
   const c = document.getElementById('holidayTags');
   const keys = Object.keys(holidays).sort();
@@ -313,7 +322,22 @@ function loadHolidays(year) {
     }
   };
   const selected = h[year] || {};
-  Object.assign(holidays, selected);
+  
+  const startStr = document.getElementById('startDate').value;
+  const endStr = document.getElementById('endDate').value;
+  
+  const filtered = {};
+  for (const [dateStr, name] of Object.entries(selected)) {
+    if (startStr && dateStr < startStr) continue;
+    if (endStr && dateStr > endStr) continue;
+    filtered[dateStr] = name;
+  }
+  
+  if (Object.keys(filtered).length === 0 && Object.keys(selected).length > 0) {
+    showAlert(startStr && endStr ? `No holidays fall between ${startStr} and ${endStr}.` : `No valid holidays to load.`);
+  }
+
+  Object.assign(holidays, filtered);
   renderHolidayTags();
   updateAvailabilitySummary();
 }
@@ -556,6 +580,28 @@ function generatePlan() {
     }
   }
 
+  const actualSessions = sessions.length;
+  let bufferInited = false;
+  while (slotIdx < slots.length) {
+    const slot = slots[slotIdx++];
+    const thisHrs = slot.durationMins / 60;
+    sessions.push({
+      num: ++sessionNum,
+      date: slot.date,
+      dateStr: slot.dateStr,
+      startTime: slot.startTime,
+      endTime: addMins(slot.startTime, slot.durationMins),
+      durationMins: slot.durationMins,
+      unitIdx: validUnits.length,
+      unitName: 'Buffer Session',
+      topic: 'Revision / Open Practice',
+      hours: thisHrs,
+      cumPct: 100,
+      isFirst: !bufferInited
+    });
+    bufferInited = true;
+  }
+
   // ── Count excluded days ─────────────────────────────────
   const hCount = Object.keys(holidays).length;
   const pCount = excludePeriods.reduce((s, p) => {
@@ -567,7 +613,7 @@ function generatePlan() {
   }, 0);
 
   // ── Render ──────────────────────────────────────────────
-  renderStats(sessions.length, totalHrs, slots.length, hCount, excludePeriods.length);
+  renderStats(actualSessions, totalHrs, slots.length, hCount, pCount);
   renderTable(sessions);
 
   const remUi = document.getElementById('remainingAlert');
@@ -658,7 +704,7 @@ function renderStats(sessions, totalHrs, availDays, hCount, pCount) {
     </div>
     <div class="stat-card">
       <div class="stat-val">${pCount}</div>
-      <div class="stat-lbl">Exam Periods Excluded</div>
+      <div class="stat-lbl">Blockout Days Excl.</div>
     </div>`;
 }
 
